@@ -20,7 +20,6 @@ type Publication struct {
 }
 
 type Message struct {
-	Id          string `json:"id"`
 	Transaction string `json:"transaction"`
 
 	Command     `json:"command"`

@@ -2,18 +2,18 @@ package table
 
 import (
 	"fmt"
-	"github.com/eskpil/imq"
+	"github.com/eskpil/imq/pkg/common"
 )
 
 type EntryKind uint64
 
 const (
-	EntryKindLocale EntryKind = iota
+	EntryKindLocal EntryKind = iota
 	EntryKindRemote
 )
 
 type LocalEntry struct {
-	Handler imq.Handler
+	Handler common.Handler
 }
 
 type RemoteEntry struct {
@@ -33,14 +33,22 @@ type Table struct {
 	Entries map[string]*Entry
 }
 
-func (t *Table) AddInternalEntry(queue string, handler imq.Handler) error {
-	if _, has := t.Entries[queue]; !has {
+func New() *Table {
+	table := new(Table)
+
+	table.Entries = make(map[string]*Entry, 1000)
+
+	return table
+}
+
+func (t *Table) AddInternalEntry(queue string, handler common.Handler) error {
+	if _, has := t.Entries[queue]; has {
 		return fmt.Errorf("entry already exists")
 	}
 
 	entry := new(Entry)
 
-	entry.Kind = EntryKindLocale
+	entry.Kind = EntryKindLocal
 	entry.LocalEntry.Handler = handler
 	entry.Queue = queue
 
@@ -49,6 +57,27 @@ func (t *Table) AddInternalEntry(queue string, handler imq.Handler) error {
 	return nil
 }
 
+func (t *Table) AddRemoteEntry(queue string, sessionId string) error {
+	if _, has := t.Entries[queue]; has {
+		return fmt.Errorf("entry already exists")
+	}
+
+	entry := new(Entry)
+
+	entry.Kind = EntryKindRemote
+	entry.RemoteEntry.SessionId = sessionId
+	entry.Queue = queue
+
+	t.Entries[queue] = entry
+
+	return nil
+}
+
 func (t *Table) FindEntry(queue string) (*Entry, error) {
-	return nil, nil
+	entry, has := t.Entries[queue]
+	if !has {
+		return nil, fmt.Errorf("can not find queue")
+	}
+
+	return entry, nil
 }
